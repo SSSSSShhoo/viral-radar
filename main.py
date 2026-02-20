@@ -110,6 +110,11 @@ def update_channel_avg_views(
 ) -> float:
     """チャンネルの平均再生数を更新する"""
     video_stats = api.get_channel_recent_video_stats(uploads_playlist_id, max_results=30)
+
+    if not video_stats:
+        logger.warning(f"動画データなし。平均再生数を更新しません: {handle}")
+        return stats.get(handle, {}).get("avg_views", 0)
+
     avg_views = calculate_channel_avg_views(video_stats)
 
     if handle not in stats:
@@ -195,18 +200,41 @@ def main() -> None:
 
     # 3. ランキング＆通知
     ranked = rank_and_limit(all_buzz_videos)
-    logger.info(f"バズり動画合計: {len(all_buzz_videos)}本 -> 通知: {len(ranked)}本")
 
-    message = format_notification(ranked, date_str)
-    logger.info(f"通知メッセージ:\n{message}")
+    # 既に通知済みの動画を除外
+    notified = stats.get("_notified_videos", {})
+    new_buzz = [v for v in ranked if v.video_id not in notified]
+    logger.info(
+        f"バズり動画合計: {len(all_buzz_videos)}本 -> "
+        f"ランキング: {len(ranked)}本 -> 新規: {len(new_buzz)}本"
+    )
 
-    # LINE通知送信
-    try:
-        send_line_message(message)
-        logger.info("LINE通知送信完了")
-    except LINENotifyError as e:
-        logger.error(f"LINE通知送信失敗: {e}")
-        sys.exit(1)
+    if not new_buzz and all_buzz_videos:
+        # バズ動画はあるが全て通知済み → 通知スキップ
+        logger.info("全て通知済み。LINE通知をスキップします。")
+    else:
+        message = format_notification(new_buzz, date_str)
+        logger.info(f"通知メッセージ:\n{message}")
+
+        # LINE通知送信
+        try:
+            send_line_message(message)
+            logger.info("LINE通知送信完了")
+        except LINENotifyError as e:
+            logger.error(f"LINE通知送信失敗: {e}")
+            sys.exit(1)
+
+        # 通知成功後、動画IDを記録
+        for v in new_buzz:
+            notified[v.video_id] = now.isoformat()
+
+    # 古い通知記録を削除（14日以上前）
+    cutoff = (now - timedelta(days=LOOKBACK_DAYS * 2)).isoformat()
+    stats["_notified_videos"] = {
+        vid: ts for vid, ts in notified.items()
+        if ts > cutoff
+    }
+    save_channel_stats(stats)
 
     logger.info(f"API クォータ使用量: {api.quota_used} ユニット")
     logger.info("=== 海外バイラルレーダー 実行完了 ===")
