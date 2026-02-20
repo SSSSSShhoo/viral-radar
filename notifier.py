@@ -50,7 +50,7 @@ def format_notification(buzz_videos: list[BuzzVideo], date_str: str) -> str:
             f"\U0001f4e1 海外バイラルレーダー ({date_str})\n"
             "\u2501" * 14 + "\n\n"
             "今日はバズり動画が検知されませんでした。\n"
-            "しきい値: 通常の3倍以上 & 5万再生以上"
+            "しきい値: 通常の2倍以上 & 1万再生以上"
         )
 
     lines = [

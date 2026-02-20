@@ -7,8 +7,8 @@
 - buzz_score = 動画のvelocity / チャンネル平均velocity
 
 通知条件:
-- buzz_score >= 3.0（通常の3倍以上の速度で伸びている）
-- かつ view_count >= 50,000（最低再生数フィルタ）
+- buzz_score >= 2.0（通常の2倍以上の速度で伸びている）
+- かつ view_count >= 10,000（最低再生数フィルタ）
 - 1日最大10件まで
 """
 
@@ -25,8 +25,8 @@ DATA_DIR = Path(__file__).parent / "data"
 STATS_FILE = DATA_DIR / "channel_stats.json"
 
 # バズり検知のしきい値
-BUZZ_SCORE_THRESHOLD = 3.0
-MIN_VIEW_COUNT = 50_000
+BUZZ_SCORE_THRESHOLD = 2.0
+MIN_VIEW_COUNT = 10_000
 MAX_NOTIFICATIONS = 10
 
 
