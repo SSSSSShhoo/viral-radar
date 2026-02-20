@@ -209,9 +209,12 @@ def main() -> None:
         f"ランキング: {len(ranked)}本 -> 新規: {len(new_buzz)}本"
     )
 
-    if not new_buzz and all_buzz_videos:
-        # バズ動画はあるが全て通知済み → 通知スキップ
-        logger.info("全て通知済み。LINE通知をスキップします。")
+    if not new_buzz:
+        # 新規のバズり動画なし → 通知スキップ
+        if all_buzz_videos:
+            logger.info("全て通知済み。LINE通知をスキップします。")
+        else:
+            logger.info("バズり動画なし。LINE通知をスキップします。")
     else:
         message = format_notification(new_buzz, date_str)
         logger.info(f"通知メッセージ:\n{message}")
